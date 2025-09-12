@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="tr"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anoma Cross-Chain Payment</title>
+<link rel="icon" href="assets/img/anoma-logo.svg" />
+<link rel="stylesheet" href="assets/css/styles.css" />
+    <script>
+  // Conditional manifest inject (avoid CORS on file://)
+  (function(){
+    try{
+      var isHTTP = (location.protocol === 'https:' || location.protocol === 'http:' || location.hostname === 'localhost');
+      if(isHTTP){
+        var l = document.createElement('link');
+        l.rel = 'manifest';
+        l.href = 'assets/json/manifest.json';
+        document.head.appendChild(l);
+      }
+    }catch(e){}
+  })();
+  </script>
+</head>
+<body>
+<header class="site-header">
+  <div class="brand">
+    <img src="assets/img/anoma-logo.svg" alt="Anoma" class="logo" />
+    <div><h1>Anoma</h1><p class="tag">Cross-Chain Payment</p></div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="send">Send</button>
+    <button class="nav-btn" data-tab="receive">Receive</button>
+    <button class="nav-btn" data-tab="activity">Activity</button>
+    <button class="nav-btn" data-tab="intents">Intents</button>
+  </nav>
+</header>
+
+<main class="container center-wrap">
+  <div class="strategy" role="tablist" aria-label="Strategy">
+    <button class="str-btn active" data-str="fast">⚡ Fast</button>
+    <button class="str-btn" data-str="cheap">💸 Cheap</button>
+    <button class="str-btn" data-str="private">🕶️ Private</button>
+  </div>
+
+  <section class="card tab" id="tab-send">
+    <h2 class="card-title">Send Cross-Chain Instantly</h2>
+    <div class="grid two">
+      <div class="field">
+        <label>From (Chain)</label>
+        <div class="select-row">
+          <select id="fromChain"><option>ETH</option><option>BTC</option><option>SOL</option><option>MATIC</option><option>OP</option><option>ARB</option><option>BASE</option><option>BNB</option><option>AVAX</option><option>TRX</option><option>NEAR</option><option>TON</option><option>ADA</option><option>ATOM</option><option>DOT</option><option>SUI</option><option>APT</option><option>SEI</option></select>
+          <button id="switchBtn" class="swap-btn" title="Swap chains">↔</button>
+          <select id="toChain"><option>ETH</option><option>BTC</option><option>SOL</option><option>MATIC</option><option>OP</option><option>ARB</option><option>BASE</option><option>BNB</option><option>AVAX</option><option>TRX</option><option>NEAR</option><option>TON</option><option>ADA</option><option>ATOM</option><option>DOT</option><option>SUI</option><option>APT</option><option>SEI</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>To Asset</label>
+        <select id="toAsset">
+          <option>USDC</option>
+          <option>USDT</option>
+          <option>ETH</option>
+          <option>BTC</option>
+          <option>DAI</option>
+          <option>SOL</option>
+        </select>
+      </div>
+    
+      <div class="field"><label>Amount</label><input id="amount" type="number" min="0" step="any" placeholder="0.00" /></div>
+      <div class="field"><label>Recipient Address</label><input id="toAddress" type="text" placeholder="wallet address (e.g., 0x..., 3FZb...)" /></div>
+    </div>
+    <div class="cta-row">
+      <button id="connectBtn" class="btn outline">Connect Wallet</button>
+      <button id="createIntentBtn" class="btn">Create Intent</button>
+      <button id="sendBtn" class="btn primary">Send</button>
+    </div>
+    <p class="tiny note">Demo: Network is disconnected. UI and data flow are examples.</p>
+  </section>
+
+  <section class="card tab hidden" id="tab-receive">
+    <h2 class="card-title">Receive (QR)</h2>
+    <div class="grid two">
+      <div class="field"><label>Chain</label><select id="recvChain"><option>ETH</option><option>BTC</option><option>SOL</option><option>MATIC</option><option>OP</option><option>ARB</option><option>BASE</option><option>BNB</option><option>AVAX</option><option>TRX</option><option>NEAR</option><option>TON</option><option>ADA</option><option>ATOM</option><option>DOT</option><option>SUI</option><option>APT</option><option>SEI</option></select></div>
+      <div class="field"><label>Amount (optional)</label><input id="recvAmount" type="number" min="0" step="any" placeholder="0.00" /></div>
+      <div class="field"><label>Recipient Address</label><input id="recvAddress" type="text" placeholder="your address (e.g., 0x..., 3FZb...)" /></div>
+      <div class="field"><label>Memo</label><input id="recvMemo" type="text" placeholder="e.g., 'logo design fee', 'NFT #1234'" /></div>
+    </div>
+    <div class="qr-wrap">
+      <div id="qrBox" class="qr-box"><div class="qr-placeholder"><div class="qr-grid"></div><span>QR will appear here</span></div></div>
+      <div class="qr-actions"><button id="genQR" class="btn primary">Generate QR</button><button id="copyLink" class="btn outline">Linki Copy</button><button id="downloadQR" class="btn ghost">Download QR (PNG)</button></div>
+      <p class="tiny note">Note: Built-in demo QR generator. Use a standard QR library in production.</p>
+    </div>
+  </section>
+
+  <section class="card tab hidden" id="tab-activity">
+    <h2 class="card-title">Activity</h2>
+    <input id="actSearch" class="filter" placeholder="Search: address, type, chain..." />
+    <div id="activityList" class="activity-list"></div>
+    <div class="cta-row"><button id="exportCSV" class="btn ghost">Export as CSV</button><button id="clearActivity" class="btn outline">Clear Activity</button></div>
+  </section>
+
+  <section class="card tab hidden scroll-y" id="tab-intents">
+    <h2 class="card-title">Intent Templates</h2>
+    <div class="intents-list">
+      <article class="intent-item">
+        <h3>IntentPay — Pay with Anything, Receive on Anything</h3>
+        <div class="intent-grid">
+          <label>From Chain<select id="ip_from"><option>ETH</option><option>SOL</option><option>BTC</option><option>BASE</option><option>ARB</option><option>OP</option></select></label>
+          <label>To Chain<select id="ip_to"><option>BASE</option><option>ETH</option><option>SOL</option><option>BTC</option><option>ARB</option><option>OP</option></select></label>
+          <label>Deliver Asset<input id="ip_asset" placeholder="USDC" value="USDC"/></label>
+          <label>Amount<input id="ip_amount" type="number" step="any" placeholder="100" value="100"/></label>
+          <label>Recipient<input id="ip_recipient" placeholder="0xRecipient..."/></label>
+        </div>
+        <div class="cta-row"><button id="ip_create" class="btn">Create JSON</button></div>
+      </article>
+
+      <article class="intent-item">
+        <h3>NFTeXpress — Chain-agnostic NFT Checkout</h3>
+        <div class="intent-grid">
+          <label>NFT Identifier<input id="nx_nft" placeholder="contract:tokenId veya URL"/></label>
+          <label>Price Cap<input id="nx_cap" type="number" step="any" placeholder="0.8" value="0.8"/></label>
+          <label>Currency<select id="nx_currency"><option>SOL</option><option>ETH</option><option>USDC</option></select></label>
+          <label>Deliver Chain<select id="nx_chain"><option>ETH</option><option>BASE</option><option>SOL</option></select></label>
+          <label>Recipient<input id="nx_recipient" placeholder="0xRecipient..."/></label>
+        </div>
+        <div class="cta-row"><button id="nx_create" class="btn">Create JSON</button></div>
+      </article>
+
+      <article class="intent-item">
+        <h3>SubSafe — Cross-chain Subscription</h3>
+        <div class="intent-grid">
+          <label>Monthly Amount<input id="ss_amount" type="number" step="any" placeholder="20" value="20"/></label>
+          <label>Currency<select id="ss_asset"><option>USDC</option><option>ETH</option><option>SOL</option></select></label>
+          <label>Months<input id="ss_months" type="number" placeholder="12" value="12"/></label>
+          <label>Total Cap<input id="ss_cap" type="number" step="any" placeholder="260" value="260"/></label>
+          <label>Recipient<input id="ss_recipient" placeholder="0xRecipient..."/></label>
+          <label>Deliver Chain<select id="ss_chain"><option>BASE</option><option>ETH</option><option>SOL</option></select></label>
+        </div>
+        <div class="cta-row"><button id="ss_create" class="btn">Create JSON</button></div>
+      </article>
+
+      <article class="intent-item">
+        <h3>Pay-on-Proof — Conditional Escrow</h3>
+        <div class="intent-grid">
+          <label>Amount<input id="pp_amount" type="number" step="any" placeholder="0.15" value="0.15"/></label>
+          <label>Asset<select id="pp_asset"><option>ETH</option><option>USDC</option><option>SOL</option></select></label>
+          <label>Chain<select id="pp_chain"><option>ETH</option><option>BASE</option><option>SOL</option></select></label>
+          <label>Recipient<input id="pp_recipient" placeholder="0xRecipient..."/></label>
+          <label>Condition<input id="pp_condition" placeholder="delivery_proof:tracking_id"/></label>
+        </div>
+        <div class="cta-row"><button id="pp_create" class="btn">Create JSON</button></div>
+      </article>
+
+      <article class="intent-item">
+        <h3>Gasless Invoice — Link + Intent</h3>
+        <div class="intent-grid">
+          <label>Amount<input id="gi_amount" type="number" step="any" placeholder="100" value="100"/></label>
+          <label>Deliver Asset<input id="gi_asset" placeholder="USDC" value="USDC"/></label>
+          <label>Deliver Chain<select id="gi_chain"><option>BASE</option><option>ETH</option><option>SOL</option></select></label>
+          <label>Recipient<input id="gi_recipient" placeholder="0xRecipient..."/></label>
+          <label>Invoice ID<input id="gi_invoice" placeholder="INV-2025-001"/></label>
+        </div>
+        <div class="cta-row"><button id="gi_create" class="btn">Create JSON</button></div>
+      </article>
+    </div>
+  </section>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <header class="modal-head">
+        <h3 id="modalTitle">Intent JSON</h3>
+        <button id="modalClose" class="btn close">✕</button>
+      </header>
+      <pre id="modalContent" class="modal-content"></pre>
+      <div id="quoteView" class="quote-view hidden">
+        <div class="route"></div>
+          <div id="modalStrategy" class="strategy modal-str">
+            <button class="str-btn ms-btn" data-str="fast">⚡ Fast</button>
+            <button class="str-btn ms-btn" data-str="cheap">💸 Cheap</button>
+            <button class="str-btn ms-btn" data-str="private">🕶️ Private</button>
+          </div>
+        <div class="quote-stats">
+            <div><span>Strategy</span><strong id="q_strategy">—</strong></div>
+          <div><span>ETA</span><strong id="q_eta">—</strong></div>
+          <div><span>Cost (USD)</span><strong id="q_cost">—</strong></div>
+          <div><span>Quote ID</span><strong id="q_id">—</strong></div>
+        </div>
+        
+       
+          <div id="lintBox" class="lint hidden"></div>
+          <div id="apiBox" class="api-box hidden">
+            <details>
+              <summary>API & cURL</summary>
+              <div class="api-grid">
+                <div>
+                  <label>cURL</label>
+                  <textarea id="curlText" readonly></textarea>
+                  <button id="copyCurl" class="btn outline">Copy cURL</button>
+                </div>
+                <div>
+                  <label>OpenAPI (stub)</label>
+                  <textarea id="openapiText" readonly></textarea>
+                </div>
+              </div>
+            </details>
+          </div>
+          <p id="q_explain" class="tiny" style="margin-top:8px;"></p>
+      </div>
+      <div class="cta-row modal-cta">
+        <button id="copyJson" class="btn outline">Copy</button>
+        <button id="getQuote" class="btn">Get Quote (demo)</button>
+        <button id="executeDemo" class="btn primary">Execute (demo)</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer custom-footer">
+  <div class="pill"><span class="muted">Powered by</span><img src="assets/img/x-logo.png" alt="X" width="18" height="18" loading="lazy" /><a href="https://x.com/emir_ethh" class="brand-link">Emir.Eth</a></div>
+</footer>
+
+<div id="toastBox" class="toast-box"></div>
+<script src="assets/js/app.js"></script>
+</body></html>
