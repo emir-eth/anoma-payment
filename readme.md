@@ -14,3 +14,4 @@ A simple demo of an intent-centric cross-chain payment experience. It is not con
 ▫️ Validation \& Helpers: Quick Intent Linter hints in the modal; simple API \& cURL example and a small OpenAPI stub.<br>
 ▫️ Technical note: Pure frontend/ES5; data in localStorage; basic offline (PWA) support. No wallet/chain integration (demo).<br>
 
+My Discord: emirkostik
